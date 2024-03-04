@@ -33,21 +33,7 @@ func main() {
 		flagSet.Usage()
 		return
 	}
-	/*conf := hidden_fuzzer.Config{
-		//Url: "https://trendyol.com",
-		//Url: "http://testphp.vulnweb.com",
-		Target: "http://192.168.1.106",
-		//Wordlist: "/usr/share/wordlist/SecLists/Discovery/Web-Content/raft-small-directories-lowercase.txt",
-		Wordlist: "wordlist.txt",
-		Headers: map[string]string{
-			"User-Agent": "Random",
-		},
-		Method:           "GET",
-		Threads:          50,
-		FailureCounter:   3,
-		DuplicateCounter: 5,
-		RedirectCounter:  3,
-	}*/
+
 	var conf hidden_fuzzer.Config
 	err := conf.Build(options)
 	if err != nil {
@@ -56,7 +42,7 @@ func main() {
 	worker := hidden_fuzzer.NewWorker(&conf)
 	worker.Start()
 
-	fmt.Println("Analze ended:")
+	fmt.Println("\nAnalze ended:")
 	fmt.Println("")
 
 	for _, resp := range worker.FoundUrls {
