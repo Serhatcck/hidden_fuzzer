@@ -161,7 +161,7 @@ func (w *Worker) AnalyzeSubFolder() {
 			})
 			pathSlash := slashCounter(url.Request.URL)
 			//Depth Counter  Check
-			if (pathSlash - w.mainSlash) < w.Config.Depth {
+			if (pathSlash - w.mainSlash) <= w.Config.Depth {
 				w.TargetPaths = append(w.TargetPaths, FoundPath{
 					Path: url.Request.URL,
 				})
