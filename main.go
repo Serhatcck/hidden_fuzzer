@@ -28,7 +28,7 @@ func main() {
 	flagSet.IntVar(&options.Depth, "depth", 3, "Sub directory depth number")
 
 	flagSet.Parse(os.Args[1:])
-	//
+
 	if h {
 		flagSet.Usage()
 		return
