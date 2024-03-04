@@ -1,4 +1,4 @@
-module github.com/Serhatcck/hidden_fuzzer
+module hidden_fuzzer
 
 go 1.21.5
 
