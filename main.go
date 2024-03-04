@@ -6,6 +6,7 @@ import (
 	"hidden_fuzzer/pkg/hidden_fuzzer"
 	"log"
 	"os"
+	"strconv"
 )
 
 func main() {
@@ -13,6 +14,7 @@ func main() {
 	var options hidden_fuzzer.Options
 
 	flagSet := flag.NewFlagSet("Hidden Fuzzer", flag.ExitOnError)
+	//TO DO create new parameter for rate limit
 	flagSet.BoolVar(&h, "h", false, "Show the help message")
 	flagSet.StringVar(&options.Url, "url", "", "Target URL")
 	flagSet.StringVar(&options.Wordlist, "w", "", "Wordlist File")
@@ -49,38 +51,12 @@ func main() {
 		if resp.IsRedirect {
 
 			//fmt.Println("RedirectedURl: " + resp.Request.URL)
-			fmt.Println(resp.Request.URL)
+			fmt.Println(resp.Request.URL + " : " + strconv.Itoa(resp.Response.StatusCode))
 
 		} else {
-			fmt.Println(resp.Request.URL)
+			fmt.Println(resp.Request.URL + " : " + strconv.Itoa(resp.Response.StatusCode))
 
 		}
 	}
-	/*var conf hidden_fuzzer.Config
-	err := conf.Build(options)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-	os.Exit(0)
-	wordlist, err := readFileLines(conf.Wordlist)
-	if err != nil {
-		fmt.Println(err)
-	}
-	conf.Wordlists = wordlist
-	worker := hidden_fuzzer.NewWorker(&conf)
-	worker.Start()
-
-	fmt.Println("Analze ended:")
-	fmt.Println("")
-
-	for _, resp := range worker.FoundUrls {
-		if resp.IsRedirect {
-
-			fmt.Println("RedirectedURl: " + resp.Request.URL)
-		} else {
-			fmt.Println(resp.Request.URL)
-
-		}
-	}*/
 
 }

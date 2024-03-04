@@ -161,7 +161,7 @@ func (w *Worker) AnalyzeSubFolder() {
 			})
 			pathSlash := slashCounter(url.Request.URL)
 			//Depth Counter  Check
-			if (pathSlash - w.mainSlash) < w.Config.Depth {
+			if (pathSlash - w.mainSlash) <= w.Config.Depth {
 				w.TargetPaths = append(w.TargetPaths, FoundPath{
 					Path: url.Request.URL,
 				})
@@ -230,6 +230,7 @@ func (w *Worker) executeTask(queue WorkQueue) {
 		//if redirect
 		if tmpResponse.StatusCode >= 300 && tmpResponse.StatusCode < 400 {
 			if tmpResponse.Headers["Location"] != nil {
+
 				redirectLocation := tmpResponse.Headers["Location"][0]
 				u, err := url.Parse(redirectLocation)
 
@@ -242,9 +243,9 @@ func (w *Worker) executeTask(queue WorkQueue) {
 					w.executeTask(queue)
 					return
 				} else {
-
 					// redirect aynı URL e
-					if u.Host == w.RootInformation.Request.Host {
+					if u.Hostname() == w.RootInformation.Request.Host {
+
 						queue.Req.URL = redirectLocation
 						queue.RedirectConter += 1
 						w.executeTask(queue)

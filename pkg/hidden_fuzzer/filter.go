@@ -18,6 +18,8 @@ func isSimilar(str1 string, str2 string) bool {
 	//fmt.Printf("Jaro Distance is is %f \n", jDiff)        // > %0.80
 	//fmt.Printf("Jaro Wingkler Distance is %f \n", jwDiff) // > %0.90*/
 	//fmt.Printf("%d ,%d \n", jDiff, jwDiff)
+
+	//TO DO set this percents from conf
 	if jDiff > 0.80 && jwDiff > 0.90 {
 		return true
 	} else {
