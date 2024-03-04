@@ -103,7 +103,7 @@ func (r *SimpleRunner) Execute(req *Request) (Response, error) {
 		httpreq.Host = req.Headers["Host"]
 	}
 
-	req.Host = httpreq.Host
+	req.Host = httpreq.URL.Hostname()
 	//httpreq = httpreq.WithContext(httptrace.WithClientTrace(r.config.Context, trace))
 
 	for k, v := range req.Headers {
