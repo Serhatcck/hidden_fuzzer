@@ -45,6 +45,9 @@ func MainCheck(rootInfo Response, newInfo Response) bool {
 // if not matcher return index value of response in duplicateIndexes array
 func DuplicateCheck(resp Response, w *Worker) (bool, int) {
 	for idx, duplicate := range w.DuplicateIndexes {
+		if resp.Body == "" {
+			resp.Body = getHeeaderToString(resp.Headers)
+		}
 		if isSimilar(resp.Body, duplicate.Body) {
 			w.DuplicateIndexes[idx].Counter++
 			return w.DuplicateIndexes[idx].Counter > w.Config.DuplicateCounter, duplicate.Index // if duplicate counter is a 49+ duplicate check is matched return true / else duplicate check is not matched return false

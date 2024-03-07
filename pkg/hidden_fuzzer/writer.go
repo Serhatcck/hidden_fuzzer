@@ -3,6 +3,7 @@ package hidden_fuzzer
 import (
 	"fmt"
 	"os"
+	"strconv"
 )
 
 const (
@@ -15,9 +16,17 @@ func WriteStatus(worker *Worker, stat int, counter int) {
 	}
 }
 
-func WriteFound(worker *Worker, url string) {
+func WriteFound(worker *Worker, queue WorkQueue, response Response) {
 	if !worker.Config.Silent {
-		fmt.Fprintf(os.Stderr, "%s%s\n", Clear_Terminal, url)
+		var print = "[" + queue.Req.Method + "] "
+		if queue.RedirectConter > 0 {
+			for _, rsp := range queue.RedirectQueue {
+				print += "[" + rsp.Request.URL + "] -> "
+			}
+		}
+		print += response.URL + " : " + strconv.Itoa(response.StatusCode)
+
+		fmt.Fprintf(os.Stderr, "%s%s\n", Clear_Terminal, print)
 	}
 }
 
