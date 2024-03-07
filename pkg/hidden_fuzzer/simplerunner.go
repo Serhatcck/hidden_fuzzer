@@ -46,13 +46,13 @@ func NewSimpleRunner(conf *Config, replay bool) *SimpleRunner {
 	simplerunner.config = conf
 	simplerunner.client = &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
-		Timeout:       time.Duration(time.Duration(conf.Timeout) * time.Second),
+		//Timeout:       time.Duration(time.Duration(conf.Timeout) * time.Second),
 		Transport: &http.Transport{
 			//ForceAttemptHTTP2:   conf.Http2,
 			Proxy:               proxyURL,
-			MaxIdleConns:        1000,
-			MaxIdleConnsPerHost: 500,
-			MaxConnsPerHost:     500,
+			MaxIdleConns:        200,
+			MaxIdleConnsPerHost: 200,
+			MaxConnsPerHost:     200,
 			DialContext: (&net.Dialer{
 				Timeout: time.Duration(time.Duration(conf.Timeout) * time.Second),
 			}).DialContext,
@@ -99,8 +99,8 @@ func (r *SimpleRunner) Execute(req *Request) (Response, error) {
 	}
 
 	// Handle Go http.Request special cases
-	if _, ok := req.Headers["Host"]; ok {
-		httpreq.Host = req.Headers["Host"]
+	if _, ok := req.Headers["Host"]; !ok {
+		req.Headers["Host"] = req.Host
 	}
 
 	req.Host = httpreq.URL.Hostname()
@@ -114,7 +114,6 @@ func (r *SimpleRunner) Execute(req *Request) (Response, error) {
 	if err != nil {
 		return Response{}, err
 	}
-
 	//resp := ffuf.NewResponse(httpresp, req)
 	resp := &Response{
 		URL:        req.URL,

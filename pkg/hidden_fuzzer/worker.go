@@ -26,6 +26,7 @@ type Worker struct {
 	currentTarget      string
 	queueWorkCounter   int
 	goroutineCountChan chan int
+	isrunning          bool
 }
 
 type FoundPath struct {
@@ -65,7 +66,7 @@ func NewWorker(conf *Config) *Worker {
 
 func (w *Worker) Start() error {
 	// Gorutin sayısını takip etmek için bir kanal oluştur
-
+	w.isrunning = true
 	w.goroutineCountChan = make(chan int)
 
 	go w.showProgress(w.goroutineCountChan)
@@ -73,6 +74,7 @@ func (w *Worker) Start() error {
 	w.currentTarget = w.Config.Url.String()
 	err := w.start(w.Config.Url.String())
 	if err != nil {
+		w.isrunning = false
 		return err
 	}
 	//w.ProssesWg.Wait()
@@ -80,7 +82,7 @@ func (w *Worker) Start() error {
 	if len(w.FoundPaths) > 0 {
 		w.startSubFolderExection()
 	}
-
+	w.isrunning = false
 	return nil
 }
 
@@ -185,7 +187,9 @@ func (w *Worker) showProgress(goroutineCountChan chan int) {
 			// Her bir saniyede bir toplam gorutin sayısını ekrana bas
 			//goroutinesPerSecondChan <- reqPerSecondCount
 			// counter'ı sıfırla
-
+			if !w.isrunning {
+				return
+			}
 			WriteStatus(w, reqPerSecondCount, w.queueWorkCounter)
 			reqPerSecondCount = 0
 		case delta := <-goroutineCountChan:
@@ -215,6 +219,8 @@ func (w *Worker) AnalyzeDuplicate() {
 }
 
 func (w *Worker) executeTask(queue WorkQueue) {
+	//wait for anything
+	w.SleepWg.Wait()
 	if queue.RedirectConter > w.Config.RedirectCounter {
 		return
 	}
@@ -224,6 +230,9 @@ func (w *Worker) executeTask(queue WorkQueue) {
 			w.sleep()
 			w.failureCheck(0)
 
+		} else {
+			//got error try once
+			w.executeTask(queue)
 		}
 
 	} else {

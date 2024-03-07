@@ -46,6 +46,7 @@ func MainCheck(rootInfo Response, newInfo Response) bool {
 func DuplicateCheck(resp Response, w *Worker) (bool, int) {
 	for idx, duplicate := range w.DuplicateIndexes {
 		if resp.Body == "" {
+			//if response has not body set header to body
 			resp.Body = getHeeaderToString(resp.Headers)
 		}
 		if isSimilar(resp.Body, duplicate.Body) {
