@@ -1,10 +1,8 @@
 package hidden_fuzzer
 
 import (
-	"log"
 	"math/rand"
 	"net/url"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -28,6 +26,7 @@ type Worker struct {
 	currentTarget      string
 	queueWorkCounter   int
 	goroutineCountChan chan int
+	isrunning          bool
 }
 
 type FoundPath struct {
@@ -53,6 +52,7 @@ type WorkQueue struct {
 	Url            string
 	Req            Request
 	RedirectConter int
+	RedirectQueue  []Response
 }
 
 func NewWorker(conf *Config) *Worker {
@@ -64,28 +64,33 @@ func NewWorker(conf *Config) *Worker {
 	}
 }
 
-func (w *Worker) Start() {
+func (w *Worker) Start() error {
 	// Gorutin sayısını takip etmek için bir kanal oluştur
-
+	w.isrunning = true
 	w.goroutineCountChan = make(chan int)
 
 	go w.showProgress(w.goroutineCountChan)
-
-	err := w.doMainReq()
-	if err != nil {
-		log.Fatal(err)
-	}
-	w.mainSlash = slashCounter(w.RootInformation.URL)
+	w.mainSlash = slashCounter(w.Config.Url.String())
 	w.currentTarget = w.Config.Url.String()
-	w.start(w.Config.Url.String())
+	err := w.start(w.Config.Url.String())
+	if err != nil {
+		w.isrunning = false
+		return err
+	}
 	//w.ProssesWg.Wait()
 
 	if len(w.FoundPaths) > 0 {
 		w.startSubFolderExection()
 	}
+	w.isrunning = false
+	return nil
 }
 
-func (w *Worker) start(path string) {
+func (w *Worker) start(path string) error {
+	err := w.doMainReq(path)
+	if err != nil {
+		return err
+	}
 	w.ProssesWg.Add(1)
 	defer w.ProssesWg.Done()
 
@@ -102,6 +107,7 @@ func (w *Worker) start(path string) {
 	}
 	w.startExecution()
 	w.AnalyzeSubFolder()
+	return nil
 
 }
 
@@ -155,6 +161,7 @@ func (w *Worker) AnalyzeSubFolder() {
 	w.TargetPaths = nil
 	for idx, url := range w.FoundUrls {
 		if url.Response.StatusCode == 403 && !url.IsAddedFolderArray {
+
 			w.FoundUrls[idx].IsAddedFolderArray = true
 			w.FoundPaths = append(w.FoundPaths, FoundPath{
 				Path: url.Request.URL,
@@ -166,10 +173,8 @@ func (w *Worker) AnalyzeSubFolder() {
 					Path: url.Request.URL,
 				})
 			}
-
 		}
 	}
-
 }
 
 func (w *Worker) showProgress(goroutineCountChan chan int) {
@@ -182,7 +187,9 @@ func (w *Worker) showProgress(goroutineCountChan chan int) {
 			// Her bir saniyede bir toplam gorutin sayısını ekrana bas
 			//goroutinesPerSecondChan <- reqPerSecondCount
 			// counter'ı sıfırla
-
+			if !w.isrunning {
+				return
+			}
 			WriteStatus(w, reqPerSecondCount, w.queueWorkCounter)
 			reqPerSecondCount = 0
 		case delta := <-goroutineCountChan:
@@ -212,6 +219,8 @@ func (w *Worker) AnalyzeDuplicate() {
 }
 
 func (w *Worker) executeTask(queue WorkQueue) {
+	//wait for anything
+	w.SleepWg.Wait()
 	if queue.RedirectConter > w.Config.RedirectCounter {
 		return
 	}
@@ -221,6 +230,9 @@ func (w *Worker) executeTask(queue WorkQueue) {
 			w.sleep()
 			w.failureCheck(0)
 
+		} else {
+			//got error try once
+			w.executeTask(queue)
 		}
 
 	} else {
@@ -235,30 +247,34 @@ func (w *Worker) executeTask(queue WorkQueue) {
 				u, err := url.Parse(redirectLocation)
 
 				//URL değilse
+				var newUrl = ""
 				if err != nil || u.Host == "" {
-
-					newUrl := makeUrl(w.Config.Url.String(), tmpResponse.Headers["Location"][0])
-					queue.Req.URL = newUrl
-					queue.RedirectConter += 1
-					w.executeTask(queue)
-					return
+					newUrl = makeUrl(w.Config.Url.String(), tmpResponse.Headers["Location"][0])
 				} else {
 					// redirect aynı URL e
 					if u.Hostname() == w.RootInformation.Request.Host {
-
-						queue.Req.URL = redirectLocation
-						queue.RedirectConter += 1
-						w.executeTask(queue)
-						return
+						newUrl = redirectLocation
 					}
+				}
+
+				if newUrl != "" {
+					queue.Req.URL = newUrl
+					queue.RedirectConter += 1
+					queue.RedirectQueue = append(queue.RedirectQueue, tmpResponse)
+					w.executeTask(queue)
+					return
 				}
 
 			}
 		}
-		stat, index := DuplicateCheck(tmpResponse, w)
+		index := 0
+		//if tmpResponse.StatusCode != 403 {
+		stat, idx := DuplicateCheck(tmpResponse, w)
+		index = idx
 		if stat {
 			return
 		}
+		//}
 
 		isHave := IsUrlAppend(tmpResponse, w)
 		if isHave {
@@ -271,7 +287,7 @@ func (w *Worker) executeTask(queue WorkQueue) {
 			IsRedirect:         queue.RedirectConter > 0,
 			IsAddedFolderArray: false,
 		})
-		WriteFound(w, queue.Req.URL+": "+strconv.Itoa(tmpResponse.StatusCode))
+		WriteFound(w, queue, tmpResponse)
 
 	}
 }
@@ -302,10 +318,10 @@ func (w *Worker) failureCheck(indis int) {
 	}
 }
 
-func (w *Worker) doMainReq() error {
-
+func (w *Worker) doMainReq(path string) error {
+	//change mainResp for all subfolder
 	mainResp, err := w.Runner.Execute(&Request{
-		URL:     w.Config.Url.String(),
+		URL:     path,
 		Headers: w.Config.Headers,
 		Host:    w.Config.Url.Host,
 	})
@@ -318,7 +334,7 @@ func (w *Worker) doMainReq() error {
 
 		// Rastgele 5 karakterden oluşan bir dize oluştur
 		var randomUrl = string(r.Intn(26)+65) + string(r.Intn(20)+65) + string(r.Intn(26)+65) + string(r.Intn(26)+65)
-		newUrl := makeUrl(w.Config.Url.String(), randomUrl)
+		newUrl := makeUrl(path, randomUrl)
 
 		mainResp, err = w.Runner.Execute(&Request{
 			URL:     newUrl,

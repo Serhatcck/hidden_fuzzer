@@ -42,21 +42,23 @@ func main() {
 		log.Fatal(err.Error())
 	}
 	worker := hidden_fuzzer.NewWorker(&conf)
-	worker.Start()
+	errr := worker.Start()
+	if errr != nil {
+		fmt.Println("Error: " + errr.Error())
+	} else {
+		fmt.Println("\nAnalze ended:")
+		fmt.Println("")
 
-	fmt.Println("\nAnalze ended:")
-	fmt.Println("")
+		for _, resp := range worker.FoundUrls {
+			if resp.IsRedirect {
 
-	for _, resp := range worker.FoundUrls {
-		if resp.IsRedirect {
+				//fmt.Println("RedirectedURl: " + resp.Request.URL)
+				fmt.Println(resp.Request.URL + " : " + strconv.Itoa(resp.Response.StatusCode))
 
-			//fmt.Println("RedirectedURl: " + resp.Request.URL)
-			fmt.Println(resp.Request.URL + " : " + strconv.Itoa(resp.Response.StatusCode))
+			} else {
+				fmt.Println(resp.Request.URL + " : " + strconv.Itoa(resp.Response.StatusCode))
 
-		} else {
-			fmt.Println(resp.Request.URL + " : " + strconv.Itoa(resp.Response.StatusCode))
-
+			}
 		}
 	}
-
 }

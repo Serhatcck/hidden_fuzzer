@@ -16,6 +16,18 @@ func getURL(str string) (*url.URL, bool) {
 	return u, false
 }
 
+func getHeeaderToString(headers map[string][]string) string {
+	var resp = ""
+	for name, values := range headers {
+		var valueString = ""
+		for _, value := range values {
+			valueString += value + " "
+		}
+		resp += name + ":" + valueString
+	}
+	return resp
+}
+
 func readFileLines(filename string) ([]string, error) {
 	// Dosyanın var olup olmadığını kontrol etme
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
