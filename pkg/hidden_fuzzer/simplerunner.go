@@ -95,7 +95,7 @@ func (r *SimpleRunner) Execute(req *Request) (Response, error) {
 
 	// set default User-Agent header if not present
 	if _, ok := req.Headers["User-Agent"]; !ok {
-		req.Headers["User-Agent"] = "Chrome "
+		req.Headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 	}
 
 	// Handle Go http.Request special cases
@@ -104,6 +104,7 @@ func (r *SimpleRunner) Execute(req *Request) (Response, error) {
 	}
 
 	req.Host = httpreq.URL.Hostname()
+	req.Schema = httpreq.URL.Scheme
 	//httpreq = httpreq.WithContext(httptrace.WithClientTrace(r.config.Context, trace))
 
 	for k, v := range req.Headers {

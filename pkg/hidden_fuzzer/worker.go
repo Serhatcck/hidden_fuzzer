@@ -3,6 +3,7 @@ package hidden_fuzzer
 import (
 	"math/rand"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 )
@@ -220,7 +221,7 @@ func (w *Worker) AnalyzeDuplicate() {
 
 func (w *Worker) executeTask(queue WorkQueue) {
 	//wait for anything
-	w.SleepWg.Wait()
+	//w.SleepWg.Wait()
 	if queue.RedirectConter > w.Config.RedirectCounter {
 		return
 	}
@@ -230,10 +231,11 @@ func (w *Worker) executeTask(queue WorkQueue) {
 			w.sleep()
 			w.failureCheck(0)
 
-		} else {
+		} /*else {
+			w.SleepWg.Add(1)
 			//got error try once
 			w.executeTask(queue)
-		}
+		}*/
 
 	} else {
 		if MainCheck(w.RootInformation, tmpResponse) {
@@ -247,9 +249,17 @@ func (w *Worker) executeTask(queue WorkQueue) {
 				u, err := url.Parse(redirectLocation)
 
 				//URL değilse
+
 				var newUrl = ""
 				if err != nil || u.Host == "" {
-					newUrl = makeUrl(w.Config.Url.String(), tmpResponse.Headers["Location"][0])
+					if strings.HasPrefix("/", u.Host) {
+						//location -> /test -> http://host/test
+						//location -> test -> http://host/path/test
+						newUrl = makeUrl(w.RootInformation.Request.Schema+"://"+w.RootInformation.Request.Host, u.Path)
+					} else {
+						newUrl = makeUrl(w.Config.Url.String(), tmpResponse.Headers["Location"][0])
+
+					}
 				} else {
 					// redirect aynı URL e
 					if u.Hostname() == w.RootInformation.Request.Host {

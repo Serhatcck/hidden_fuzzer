@@ -47,7 +47,14 @@ func DuplicateCheck(resp Response, w *Worker) (bool, int) {
 	for idx, duplicate := range w.DuplicateIndexes {
 		if resp.Body == "" {
 			//if response has not body set header to body
-			resp.Body = getHeeaderToString(resp.Headers)
+			if len(resp.Headers["Location"]) > 0 {
+				resp.Body = resp.Headers["Location"][0] //# for lowercase check it
+			} else if len(resp.Headers["location"]) > 0 {
+				resp.Body = resp.Headers["location"][0] //# for lowercase check it
+			} else {
+				resp.Body = "EMPTY"
+			}
+			//resp.Body = getHeeaderToString(resp.Headers)
 		}
 		if isSimilar(resp.Body, duplicate.Body) {
 			w.DuplicateIndexes[idx].Counter++
