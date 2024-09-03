@@ -3,10 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"hidden_fuzzer/pkg/hidden_fuzzer"
 	"log"
 	"os"
 	"strconv"
+
+	"github.com/Serhatcck/hidden_fuzzer"
 )
 
 func main() {
