@@ -22,6 +22,8 @@ type Config struct {
 	DuplicateCounter int
 	RedirectCounter  int
 	Depth            int
+	RateLimit        int
+	UseRateLimit     bool
 }
 
 func (c *Config) Build(options Options) error {
@@ -70,5 +72,15 @@ func (c *Config) Build(options Options) error {
 	c.DuplicateCounter = options.DuplicateCounter
 	c.RedirectCounter = options.RedirectConter
 	c.Depth = options.Depth
+
+	if options.RateLimit > 0 {
+		c.UseRateLimit = true
+		c.RateLimit = options.RateLimit
+	} else {
+		c.UseRateLimit = false // os this code block set this parameter false end worker do not use rate limit
+		c.RateLimit = 10       //for integer divide by zero error
+	}
+
+	return nil
 	return nil
 }

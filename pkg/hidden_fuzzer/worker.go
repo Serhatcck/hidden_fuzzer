@@ -1,8 +1,10 @@
 package hidden_fuzzer
 
 import (
+	"log"
 	"math/rand"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 )
@@ -22,11 +24,13 @@ type Worker struct {
 	TargetPaths      []FoundPath
 	DuplicateIndexes []DuplicateIndexes
 
-	mainSlash          int
-	currentTarget      string
-	queueWorkCounter   int
-	goroutineCountChan chan int
-	isrunning          bool
+	mainSlash           int
+	currentTarget       string
+	queueWorkCounter    int
+	goroutineCountChan  chan int
+	isrunning           bool
+	isInteractiveWindow bool
+	skipQueue           bool
 }
 
 type FoundPath struct {
@@ -42,10 +46,11 @@ type FoundUrl struct {
 }
 
 type DuplicateIndexes struct {
-	Url     string
-	Counter int
-	Body    string
-	Index   int
+	Url        string
+	StatusCode int
+	Counter    int
+	Body       string
+	Index      int
 }
 
 type WorkQueue struct {
@@ -65,7 +70,14 @@ func NewWorker(conf *Config) *Worker {
 }
 
 func (w *Worker) Start() error {
+	go func() {
+		err := HandleInteractive(w)
+		if err != nil {
+			log.Printf("Error while trying to initialize interactive session: %s", err)
+		}
+	}()
 	// Gorutin sayısını takip etmek için bir kanal oluştur
+	w.isInteractiveWindow = false
 	w.isrunning = true
 	w.goroutineCountChan = make(chan int)
 
@@ -80,7 +92,11 @@ func (w *Worker) Start() error {
 	//w.ProssesWg.Wait()
 
 	if len(w.FoundPaths) > 0 {
-		w.startSubFolderExection()
+		subFulderErr := w.startSubFolderExection()
+		if subFulderErr != nil {
+			w.isrunning = false
+			return subFulderErr
+		}
 	}
 	w.isrunning = false
 	return nil
@@ -105,39 +121,65 @@ func (w *Worker) start(path string) error {
 			Method:  w.Config.Method,
 		}, RedirectConter: 0})
 	}
-	w.startExecution()
+	execErr := w.startExecution()
+	if execErr != nil {
+		return execErr
+	}
 	w.AnalyzeSubFolder()
 	return nil
 
 }
 
-func (w *Worker) startSubFolderExection() {
+func (w *Worker) startSubFolderExection() error {
 
 	w.WorkQueue = nil
 	for _, path := range w.TargetPaths {
 		w.currentTarget = path.Path
-		w.start(path.Path)
+		err := w.start(path.Path)
+		if err != nil {
+			return err
+		}
 	}
 
 	w.ProssesWg.Wait()
 	if len(w.TargetPaths) > 0 {
-		w.startSubFolderExection()
+		err := w.startSubFolderExection()
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
+// TO DO Rate Limiti Daha İyi Hale Getir
 func (w *Worker) startExecution() error {
 	w.queueWorkCounter = 0
 	time.Sleep(time.Second * 1)
 	var wg sync.WaitGroup
 	threadlimiter := make(chan bool, w.Config.Threads)
 
+	// Rate limit için gerekli olan parametreler
+	// performansı düşürüyor
+
+	rateLimit := time.Second / time.Duration(w.Config.RateLimit) // İstenen hızda bir zaman dilimi
+	lastRequestTime := time.Now()                                // Son istek zamanı
+
 	for _, queue := range w.WorkQueue {
+
+		// Rate limit kontrolü
+		if w.Config.UseRateLimit {
+			elapsed := time.Since(lastRequestTime)
+			if elapsed < rateLimit {
+				// Beklemek gerekiyor
+				time.Sleep(rateLimit - elapsed)
+			}
+			lastRequestTime = time.Now()
+		}
+
 		w.SleepWg.Wait()
 		if w.Error != nil {
-
 			w.WorkQueue = nil
 			return w.Error
-
 		}
 
 		wg.Add(1)
@@ -146,12 +188,20 @@ func (w *Worker) startExecution() error {
 		// İstek gönderilmeden önce gorutin sayısını artır
 		w.goroutineCountChan <- 1
 
+		if w.skipQueue {
+			//queue skipped
+			w.skipQueue = false
+			return nil
+		}
+
 		go func(queue WorkQueue) {
 			defer func() { <-threadlimiter }()
 			defer wg.Done()
 			w.executeTask(queue)
+
 		}(queue)
 	}
+
 	wg.Wait()
 	w.AnalyzeDuplicate()
 	return nil
@@ -190,7 +240,10 @@ func (w *Worker) showProgress(goroutineCountChan chan int) {
 			if !w.isrunning {
 				return
 			}
-			WriteStatus(w, reqPerSecondCount, w.queueWorkCounter)
+
+			if !w.isInteractiveWindow {
+				WriteStatus(w, reqPerSecondCount, w.queueWorkCounter)
+			}
 			reqPerSecondCount = 0
 		case delta := <-goroutineCountChan:
 			// Gorutin sayısını güncelle
@@ -220,7 +273,7 @@ func (w *Worker) AnalyzeDuplicate() {
 
 func (w *Worker) executeTask(queue WorkQueue) {
 	//wait for anything
-	w.SleepWg.Wait()
+	//w.SleepWg.Wait()
 	if queue.RedirectConter > w.Config.RedirectCounter {
 		return
 	}
@@ -230,10 +283,11 @@ func (w *Worker) executeTask(queue WorkQueue) {
 			w.sleep()
 			w.failureCheck(0)
 
-		} else {
+		} /*else {
+			w.SleepWg.Add(1)
 			//got error try once
 			w.executeTask(queue)
-		}
+		}*/
 
 	} else {
 		if MainCheck(w.RootInformation, tmpResponse) {
@@ -247,9 +301,17 @@ func (w *Worker) executeTask(queue WorkQueue) {
 				u, err := url.Parse(redirectLocation)
 
 				//URL değilse
+
 				var newUrl = ""
 				if err != nil || u.Host == "" {
-					newUrl = makeUrl(w.Config.Url.String(), tmpResponse.Headers["Location"][0])
+					if strings.HasPrefix("/", u.Host) {
+						//location -> /test -> http://host/test
+						//location -> test -> http://host/path/test
+						newUrl = makeUrl(w.RootInformation.Request.Schema+"://"+w.RootInformation.Request.Host, u.Path)
+					} else {
+						newUrl = makeUrl(w.Config.Url.String(), tmpResponse.Headers["Location"][0])
+
+					}
 				} else {
 					// redirect aynı URL e
 					if u.Hostname() == w.RootInformation.Request.Host {

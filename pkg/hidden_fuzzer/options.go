@@ -38,4 +38,5 @@ type Options struct {
 	Silent           bool
 	Timeout          int
 	Depth            int
+	RateLimit        int
 }

@@ -30,8 +30,11 @@ func isSimilar(str1 string, str2 string) bool {
 // if matched so if not show return true
 func MainCheck(rootInfo Response, newInfo Response) bool {
 	//main response and this response is smilar?
-	if isSimilar(rootInfo.Body, newInfo.Body) {
-		return true
+	//status kod aynı ise kontrole sok
+	if rootInfo.StatusCode == newInfo.StatusCode {
+		if isSimilar(rootInfo.Body, newInfo.Body) {
+			return true
+		}
 	}
 	//this response status code is not found?
 	for _, stat := range notFoundStatus {
@@ -47,12 +50,23 @@ func DuplicateCheck(resp Response, w *Worker) (bool, int) {
 	for idx, duplicate := range w.DuplicateIndexes {
 		if resp.Body == "" {
 			//if response has not body set header to body
-			resp.Body = getHeeaderToString(resp.Headers)
+			if len(resp.Headers["Location"]) > 0 {
+				resp.Body = resp.Headers["Location"][0] //# for lowercase check it
+			} else if len(resp.Headers["location"]) > 0 {
+				resp.Body = resp.Headers["location"][0] //# for lowercase check it
+			} else {
+				resp.Body = "EMPTY"
+			}
+			//resp.Body = getHeeaderToString(resp.Headers)
 		}
-		if isSimilar(resp.Body, duplicate.Body) {
-			w.DuplicateIndexes[idx].Counter++
-			return w.DuplicateIndexes[idx].Counter > w.Config.DuplicateCounter, duplicate.Index // if duplicate counter is a 49+ duplicate check is matched return true / else duplicate check is not matched return false
+		//status kod aynı ise kontrole sok
+		if resp.StatusCode == duplicate.StatusCode {
+			if isSimilar(resp.Body, duplicate.Body) {
+				w.DuplicateIndexes[idx].Counter++
+				return w.DuplicateIndexes[idx].Counter > w.Config.DuplicateCounter, duplicate.Index // if duplicate counter is a 49+ duplicate check is matched return true / else duplicate check is not matched return false
+			}
 		}
+
 	}
 	//no match found
 	index := AppendDuplicateIndex(resp, w)
@@ -62,10 +76,11 @@ func DuplicateCheck(resp Response, w *Worker) (bool, int) {
 func AppendDuplicateIndex(resp Response, w *Worker) int {
 	index := len(w.DuplicateIndexes) + 1
 	tmp := DuplicateIndexes{
-		Url:     resp.URL,
-		Counter: 1,
-		Body:    resp.Body,
-		Index:   index,
+		Url:        resp.URL,
+		Counter:    1,
+		Body:       resp.Body,
+		Index:      index,
+		StatusCode: resp.StatusCode,
 	}
 	w.DuplicateIndexes = append(w.DuplicateIndexes, tmp)
 	return index
