@@ -7,7 +7,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/Serhatcck/hidden_fuzzer"
+	"github.com/Serhatcck/hidden_fuzzer/pkg/hidden_fuzzer"
 )
 
 func main() {
