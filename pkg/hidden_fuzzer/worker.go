@@ -210,7 +210,13 @@ func (w *Worker) startExecution() error {
 func (w *Worker) AnalyzeSubFolder() {
 	w.TargetPaths = nil
 	for idx, url := range w.FoundUrls {
-		if url.Response.StatusCode == 403 && !url.IsAddedFolderArray {
+		//if url has an extension
+		//.gitignore
+		//.git
+		//test.aspx
+		// is not an folder. It's f/p
+		//For this reason code use hasExtension helper func
+		if url.Response.StatusCode == 403 && !url.IsAddedFolderArray && !hasExtension(url.Request.URL) {
 
 			w.FoundUrls[idx].IsAddedFolderArray = true
 			w.FoundPaths = append(w.FoundPaths, FoundPath{
@@ -358,7 +364,7 @@ func (w *Worker) failureCheck(indis int) {
 
 	w.Fail = true
 
-	time.Sleep(time.Second * time.Duration(w.Config.Timeout))
+	time.Sleep(time.Second * time.Duration(w.Config.FailureCheckTimeout))
 	_, err := sendHTTPRequest(*w.Runner.client, Request{
 		URL:     w.Config.Url.String(),
 		Headers: w.Config.Headers,

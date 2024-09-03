@@ -26,17 +26,18 @@ func (h *headerFlags) Set(value string) error {
 }
 
 type Options struct {
-	Url              string
-	Wordlist         string
-	Extensions       string
-	Headers          headerFlags
-	Method           string
-	Threads          int
-	FailureConter    int
-	DuplicateCounter int
-	RedirectConter   int
-	Silent           bool
-	Timeout          int
-	Depth            int
-	RateLimit        int
+	Url                 string
+	Wordlist            string
+	Extensions          string
+	Headers             headerFlags
+	Method              string
+	Threads             int
+	FailureConter       int
+	DuplicateCounter    int
+	RedirectConter      int
+	Silent              bool
+	FailureCheckTimeout int
+	TimeOut             int
+	Depth               int
+	RateLimit           int
 }

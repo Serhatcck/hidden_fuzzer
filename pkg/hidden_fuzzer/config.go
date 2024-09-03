@@ -8,22 +8,23 @@ import (
 )
 
 type Config struct {
-	Context          context.Context
-	Target           string
-	Url              *url.URL
-	Silent           bool
-	Wordlist         []string
-	Extensions       []string
-	Threads          int
-	Headers          map[string]string
-	Timeout          int
-	Method           string
-	FailureCounter   int
-	DuplicateCounter int
-	RedirectCounter  int
-	Depth            int
-	RateLimit        int
-	UseRateLimit     bool
+	Context             context.Context
+	Target              string
+	Url                 *url.URL
+	Silent              bool
+	Wordlist            []string
+	Extensions          []string
+	Threads             int
+	Headers             map[string]string
+	FailureCheckTimeout int
+	TimeOut             int
+	Method              string
+	FailureCounter      int
+	DuplicateCounter    int
+	RedirectCounter     int
+	Depth               int
+	RateLimit           int
+	UseRateLimit        bool
 }
 
 func (c *Config) Build(options Options) error {
@@ -66,12 +67,13 @@ func (c *Config) Build(options Options) error {
 	//others
 	c.Threads = options.Threads
 	c.Silent = options.Silent
-	c.Timeout = options.Timeout
+	c.FailureCheckTimeout = options.FailureCheckTimeout
 	c.Method = options.Method
 	c.FailureCounter = options.FailureConter
 	c.DuplicateCounter = options.DuplicateCounter
 	c.RedirectCounter = options.RedirectConter
 	c.Depth = options.Depth
+	c.TimeOut = options.TimeOut
 
 	if options.RateLimit > 0 {
 		c.UseRateLimit = true
@@ -81,6 +83,5 @@ func (c *Config) Build(options Options) error {
 		c.RateLimit = 10       //for integer divide by zero error
 	}
 
-	return nil
 	return nil
 }

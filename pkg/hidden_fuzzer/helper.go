@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
+	"path"
 	"strings"
 )
 
@@ -81,6 +82,14 @@ func addExtensionToPath(path string, extension string) string {
 	}
 
 	return newPath
+}
+
+func hasExtension(u string) bool {
+	parsedURL, _ := url.Parse(u)
+	segments := strings.Split(parsedURL.Path, "/")
+	lastSegment := segments[len(segments)-1]
+	ext := path.Ext(lastSegment)
+	return ext != ""
 }
 
 func slashCounter(url string) int {

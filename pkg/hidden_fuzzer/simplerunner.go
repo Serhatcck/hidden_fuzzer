@@ -46,7 +46,7 @@ func NewSimpleRunner(conf *Config, replay bool) *SimpleRunner {
 	simplerunner.config = conf
 	simplerunner.client = &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
-		Timeout:       time.Duration(time.Duration(10) * time.Second),
+		Timeout:       time.Duration(time.Duration(conf.TimeOut) * time.Second),
 		Transport: &http.Transport{
 			//ForceAttemptHTTP2:   conf.Http2,
 			Proxy:               proxyURL,
