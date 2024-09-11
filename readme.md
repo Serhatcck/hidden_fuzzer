@@ -27,6 +27,12 @@ The tool uses the similarity algorithm from [hyperjumptech/beda](https://github.
 - Adjustable depth for fuzzing subdirectories
 
 ## Installation
+To install and use the tool, you can install from go install 
+
+```bash
+ go install github.com/Serhatcck/hidden_fuzzer@latest
+```
+
 
 To install and use the tool as a module, you can include it in your project from the following repository:
 
