@@ -30,6 +30,10 @@ func main() {
 	flagSet.IntVar(&options.FailureCheckTimeout, "fc-tm-out", 1, "Failure Check Time Out (Second) ")
 	flagSet.IntVar(&options.TimeOut, "tm-out", 20, "HTTP Response Time Out (Second) ")
 	flagSet.IntVar(&options.Depth, "depth", 3, "Sub directory depth number")
+	flagSet.BoolVar(&options.ParamFuzing, "param-fuzzing", false, "For parameter fuzzing")
+	flagSet.StringVar(&options.ParamValue, "param-value", "test", "Value for parameter fuzzing")
+	flagSet.BoolVar(&options.Pipe, "pipe", false, "For pipe usage")
+	flagSet.StringVar(&options.FilterCode, "fc", "", "Filter response http status code, only one code status")
 
 	flagSet.Parse(os.Args[1:])
 	//
@@ -48,19 +52,38 @@ func main() {
 	if errr != nil {
 		fmt.Println("Error: " + errr.Error())
 	} else {
-		fmt.Println("\nAnalze ended:")
-		fmt.Println("")
+		if !options.Pipe {
+			fmt.Println("\nAnalze ended:")
+			fmt.Println("")
+		}
 
-		for _, resp := range worker.FoundUrls {
-			if resp.IsRedirect {
+		var foundUrls []hidden_fuzzer.FoundUrl
 
-				//fmt.Println("RedirectedURl: " + resp.Request.URL)
-				fmt.Println(resp.Request.URL + " : " + strconv.Itoa(resp.Response.StatusCode))
-
-			} else {
-				fmt.Println(resp.Request.URL + " : " + strconv.Itoa(resp.Response.StatusCode))
-
+		if options.FilterCode != "" {
+			for _, resp := range worker.FoundUrls {
+				if strconv.Itoa(resp.Response.StatusCode) != options.FilterCode {
+					foundUrls = append(foundUrls, resp)
+				}
 			}
+		} else {
+			foundUrls = worker.FoundUrls
+		}
+
+		for _, resp := range foundUrls {
+			if options.Pipe {
+				fmt.Println(resp.Request.URL)
+			} else {
+				if resp.IsRedirect {
+
+					//fmt.Println("RedirectedURl: " + resp.Request.URL)
+					fmt.Println(resp.Request.URL + " : " + strconv.Itoa(resp.Response.StatusCode))
+
+				} else {
+					fmt.Println(resp.Request.URL + " : " + strconv.Itoa(resp.Response.StatusCode))
+
+				}
+			}
+
 		}
 	}
 }

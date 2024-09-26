@@ -67,6 +67,24 @@ func makeUrl(path string, endpoint string) string {
 	return path + "/" + endpoint
 }
 
+func makeUrlWithParameter(path string, parameter string) string {
+
+	newString := ""
+	if strings.HasPrefix(parameter, "/") {
+		newString = strings.TrimPrefix(parameter, "/")
+	} else {
+		newString = parameter
+	}
+
+	if !strings.HasPrefix(parameter, "?") {
+		newString = "?" + newString + "="
+	}
+
+	newString = path + newString
+	return newString
+
+}
+
 func addExtensionToPath(path string, extension string) string {
 	newPath := ""
 	dotStat := strings.HasPrefix(extension, ".")

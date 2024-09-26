@@ -25,6 +25,8 @@ type Config struct {
 	Depth               int
 	RateLimit           int
 	UseRateLimit        bool
+	ParamFuzing         bool
+	ParamValue          string
 }
 
 func (c *Config) Build(options Options) error {
@@ -35,7 +37,7 @@ func (c *Config) Build(options Options) error {
 		c.Headers[key] = value
 	}
 	if c.Headers["User-Agent"] == "" {
-		c.Headers["User-Agent"] = "Chrome"
+		c.Headers["User-Agent"] = "User-Agent Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:130.0) Gecko/20100101 Firefox/130.0"
 	}
 
 	//url
@@ -74,6 +76,19 @@ func (c *Config) Build(options Options) error {
 	c.RedirectCounter = options.RedirectConter
 	c.Depth = options.Depth
 	c.TimeOut = options.TimeOut
+
+	c.ParamFuzing = options.ParamFuzing
+	c.ParamValue = options.ParamValue
+
+	//if param fuzzing is true do not handle 403 or directories.
+	//do not process sub directory depth
+	if c.ParamFuzing {
+		c.Depth = 0
+	}
+
+	if options.Pipe {
+		c.Silent = true
+	}
 
 	if options.RateLimit > 0 {
 		c.UseRateLimit = true

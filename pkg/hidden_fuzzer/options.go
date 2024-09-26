@@ -40,4 +40,8 @@ type Options struct {
 	TimeOut             int
 	Depth               int
 	RateLimit           int
+	ParamFuzing         bool
+	ParamValue          string
+	Pipe                bool
+	FilterCode          string
 }

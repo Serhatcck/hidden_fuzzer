@@ -114,7 +114,13 @@ func (w *Worker) start(path string) error {
 
 	for _, newUrl := range w.Config.Wordlist {
 
-		newUrl := makeUrl(path, newUrl)
+		if w.Config.ParamFuzing {
+			newUrl = makeUrlWithParameter(path, newUrl)
+			newUrl += w.Config.ParamValue
+		} else {
+			newUrl = makeUrl(path, newUrl)
+		}
+
 		w.WorkQueue = append(w.WorkQueue, WorkQueue{Url: newUrl, Req: Request{
 			URL:     newUrl,
 			Headers: w.Config.Headers,
