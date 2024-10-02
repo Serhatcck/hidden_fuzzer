@@ -27,6 +27,7 @@ type Config struct {
 	UseRateLimit        bool
 	ParamFuzing         bool
 	ParamValue          string
+	ProxyUrl            string
 }
 
 func (c *Config) Build(options Options) error {
@@ -79,6 +80,7 @@ func (c *Config) Build(options Options) error {
 
 	c.ParamFuzing = options.ParamFuzing
 	c.ParamValue = options.ParamValue
+	c.ProxyUrl = options.ProxyUrl
 
 	//if param fuzzing is true do not handle 403 or directories.
 	//do not process sub directory depth

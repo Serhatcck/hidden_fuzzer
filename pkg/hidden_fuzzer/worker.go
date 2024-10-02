@@ -104,9 +104,11 @@ func (w *Worker) Start() error {
 
 func (w *Worker) start(path string) error {
 	err := w.doMainReq(path)
+
 	if err != nil {
 		return err
 	}
+
 	w.ProssesWg.Add(1)
 	defer w.ProssesWg.Done()
 

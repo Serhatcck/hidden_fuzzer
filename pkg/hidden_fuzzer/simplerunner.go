@@ -23,25 +23,16 @@ type SimpleRunner struct {
 func NewSimpleRunner(conf *Config, replay bool) *SimpleRunner {
 	var simplerunner SimpleRunner
 	proxyURL := http.ProxyFromEnvironment
-	customProxy := ""
+	customProxy := conf.ProxyUrl
 
-	/*if replay {
-		customProxy = conf.ReplayProxyURL
-	} else {
-		customProxy = conf.ProxyURL
-	}*/
 	if len(customProxy) > 0 {
 		pu, err := url.Parse(customProxy)
+
 		if err == nil {
 			proxyURL = http.ProxyURL(pu)
 		}
 	}
 	cert := []tls.Certificate{}
-
-	/*if conf.ClientCert != "" && conf.ClientKey != "" {
-		tmp, _ := tls.LoadX509KeyPair(conf.ClientCert, conf.ClientKey)
-		cert = []tls.Certificate{tmp}
-	}*/
 
 	simplerunner.config = conf
 	simplerunner.client = &http.Client{
@@ -49,7 +40,8 @@ func NewSimpleRunner(conf *Config, replay bool) *SimpleRunner {
 		Timeout:       time.Duration(time.Duration(conf.TimeOut) * time.Second),
 		Transport: &http.Transport{
 			//ForceAttemptHTTP2:   conf.Http2,
-			Proxy:               proxyURL,
+			Proxy: proxyURL,
+
 			MaxIdleConns:        200,
 			MaxIdleConnsPerHost: 200,
 			MaxConnsPerHost:     200,
@@ -77,18 +69,8 @@ func (r *SimpleRunner) Execute(req *Request) (Response, error) {
 	var start time.Time
 	var firstByteTime time.Duration
 
-	/*trace := &httptrace.ClientTrace{
-		WroteRequest: func(wri httptrace.WroteRequestInfo) {
-			start = time.Now() // begin the timer after the request is fully written
-		},
-		GotFirstResponseByte: func() {
-			firstByteTime = time.Since(start) // record when the first byte of the response was received
-		},
-	}*/
-
 	//httpreq, err = http.NewRequestWithContext(r.config.Context, req.Method, req.URL, data)
 	httpreq, err = http.NewRequest(req.Method, req.URL, nil)
-
 	if err != nil {
 		return Response{}, err
 	}

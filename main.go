@@ -34,6 +34,7 @@ func main() {
 	flagSet.StringVar(&options.ParamValue, "param-value", "test", "Value for parameter fuzzing")
 	flagSet.BoolVar(&options.Pipe, "pipe", false, "For pipe usage")
 	flagSet.StringVar(&options.FilterCode, "fc", "", "Filter response http status code, only one code status")
+	flagSet.StringVar(&options.ProxyUrl, "p", "", "Proxy URL for all ongoning request")
 
 	flagSet.Parse(os.Args[1:])
 	//

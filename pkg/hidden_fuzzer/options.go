@@ -44,4 +44,5 @@ type Options struct {
 	ParamValue          string
 	Pipe                bool
 	FilterCode          string
+	ProxyUrl            string
 }
