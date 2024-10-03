@@ -34,11 +34,18 @@ func (c *Config) Build(options Options) error {
 	c.Headers = make(map[string]string)
 
 	//headers
+
 	for key, value := range options.Headers {
 		c.Headers[key] = value
 	}
 	if c.Headers["User-Agent"] == "" {
 		c.Headers["User-Agent"] = "User-Agent Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:130.0) Gecko/20100101 Firefox/130.0"
+	}
+	if options.XFFHeader {
+		// getXFFHeaders fonksiyonunu çağırın ve dönen haritayı ekleyin
+		for k, v := range getXFFHeaders(options.XFFValue) {
+			c.Headers[k] = v // Yeni anahtar-değer çiftlerini ekle
+		}
 	}
 
 	//url

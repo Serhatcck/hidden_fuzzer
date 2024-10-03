@@ -113,3 +113,19 @@ func hasExtension(u string) bool {
 func slashCounter(url string) int {
 	return strings.Count(url, "/")
 }
+
+func getXFFHeaders(value string) map[string]string {
+	return map[string]string{
+		"X-Originating-IP":  value, // Orijinal istemci IP adresi
+		"X-Forwarded-For":   value, // İstemcinin IP adresi
+		"X-Forwarded":       value, // İstemcinin IP adresi
+		"Forwarded-For":     value, // İstemcinin IP adresi
+		"X-Remote-IP":       value, // Uzak istemcinin IP adresi
+		"X-Remote-Addr":     value, // Uzak adres
+		"X-ProxyUser-Ip":    value, // Proxy kullanıcı IP'si
+		"X-Original-URL":    value, // Orijinal istek URL'si
+		"Client-IP":         value, // İstemci IP'si
+		"True-Client-IP":    value, // Gerçek istemci IP'si
+		"Cluster-Client-IP": value, // Küme istemci IP'si
+	}
+}

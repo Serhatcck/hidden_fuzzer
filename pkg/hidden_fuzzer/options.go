@@ -45,4 +45,6 @@ type Options struct {
 	Pipe                bool
 	FilterCode          string
 	ProxyUrl            string
+	XFFHeader           bool
+	XFFValue            string
 }
