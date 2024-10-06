@@ -47,4 +47,5 @@ type Options struct {
 	ProxyUrl            string
 	XFFHeader           bool
 	XFFValue            string
+	WordlistStringArray []string
 }

@@ -56,10 +56,18 @@ func (c *Config) Build(options Options) error {
 	c.Url = url
 
 	//wordlist
-	wordlist, errr := readFileLines(options.Wordlist)
-	if errr != nil {
-		return errr
+
+	var wordlist []string
+	if len(options.WordlistStringArray) > 0 {
+		wordlist = options.WordlistStringArray
+	} else {
+		var errr error
+		wordlist, errr = readFileLines(options.Wordlist)
+		if errr != nil {
+			return errr
+		}
 	}
+
 	//extension
 	if options.Extensions != "" {
 		var newWordlist []string

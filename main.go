@@ -27,7 +27,7 @@ func printUsage(flagSet *flag.FlagSet) {
 
 func main() {
 
-	test()
+	//test()
 	var h bool
 	var options hidden_fuzzer.Options
 
