@@ -47,18 +47,18 @@ func MainCheck(rootInfo Response, newInfo Response) bool {
 
 // if not matcher return index value of response in duplicateIndexes array
 func DuplicateCheck(resp Response, w *Worker) (bool, int) {
-	for idx, duplicate := range w.DuplicateIndexes {
-		if resp.Body == "" {
-			//if response has not body set header to body
-			if len(resp.Headers["Location"]) > 0 {
-				resp.Body = resp.Headers["Location"][0] //# for lowercase check it
-			} else if len(resp.Headers["location"]) > 0 {
-				resp.Body = resp.Headers["location"][0] //# for lowercase check it
-			} else {
-				resp.Body = "EMPTY"
-			}
-			//resp.Body = getHeeaderToString(resp.Headers)
+	if resp.Body == "" {
+		//if response has not body set header to body
+		if len(resp.Headers["Location"]) > 0 {
+			resp.Body = resp.Headers["Location"][0] //# for lowercase check it
+		} else if len(resp.Headers["location"]) > 0 {
+			resp.Body = resp.Headers["location"][0] //# for lowercase check it
+		} else {
+			resp.Body = "EMPTY"
 		}
+		//resp.Body = getHeeaderToString(resp.Headers)
+	}
+	for idx, duplicate := range w.DuplicateIndexes {
 		//status kod aynı ise kontrole sok
 		if resp.StatusCode == duplicate.StatusCode {
 			if isSimilar(resp.Body, duplicate.Body) {

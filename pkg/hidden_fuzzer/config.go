@@ -109,3 +109,13 @@ func (c *Config) Build(options Options) error {
 
 	return nil
 }
+
+func (c *Config) SetUrl(urlstring string) error {
+	// url
+	url, err := getURL(urlstring)
+	if err {
+		return errors.New("given url isn't url")
+	}
+	c.Url = url
+	return nil
+}

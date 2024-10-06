@@ -4,6 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"strconv"
 
@@ -24,6 +26,8 @@ func printUsage(flagSet *flag.FlagSet) {
 }
 
 func main() {
+
+	test()
 	var h bool
 	var options hidden_fuzzer.Options
 
@@ -110,4 +114,62 @@ func main() {
 
 		}
 	}
+}
+
+func test() {
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
+	threadlimiter := make(chan bool, 5)
+	var targets = [15]string{
+		"http://localhost:8080",
+		"http://localhost:8080",
+		"http://localhost:8080",
+		"http://localhost:8080",
+		"http://localhost:8080",
+		"http://localhost:8080",
+		"http://localhost:8080",
+		"http://localhost:8080",
+		"http://localhost:8080",
+		"http://localhost:8080",
+		"http://localhost:8080",
+		"http://localhost:8080",
+		"http://localhost:8080",
+		"http://localhost:8080",
+		"http://localhost:8080",
+	}
+
+	for i, target := range targets {
+		threadlimiter <- true
+
+		go func(p int, t string) {
+			defer func() { <-threadlimiter }()
+			fmt.Println("Start", p, "----", t)
+			var conf hidden_fuzzer.Config
+			err := conf.Build(hidden_fuzzer.Options{
+				Url:                 t,
+				Wordlist:            "/Users/serhatcicek/Desktop/wordlists/demo.txt",
+				Extensions:          "",
+				Method:              "GET",
+				Threads:             350,
+				FailureConter:       2,
+				DuplicateCounter:    50,
+				RedirectConter:      3,
+				Silent:              true,
+				FailureCheckTimeout: 2,
+				TimeOut:             20,
+				Depth:               3,
+				RateLimit:           300,
+			})
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+			worker := hidden_fuzzer.NewWorker(&conf)
+			worker.Start()
+			fmt.Println("Done", p, "----", t)
+			worker.Shutdown()
+		}(i, target)
+
+	}
+
 }

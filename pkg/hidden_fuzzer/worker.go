@@ -165,6 +165,7 @@ func (w *Worker) startExecution() error {
 	time.Sleep(time.Second * 1)
 	var wg sync.WaitGroup
 	threadlimiter := make(chan bool, w.Config.Threads)
+	defer close(threadlimiter)
 
 	// Rate limit için gerekli olan parametreler
 	// performansı düşürüyor
@@ -440,4 +441,36 @@ func (w *Worker) resume() {
 		w.Sleep = false
 		w.SleepWg.Done()
 	}
+}
+
+func (w *Worker) Shutdown() {
+	// Kanalları kapat
+	w.CloseChannels()
+
+	// Goroutine bayraklarını sıfırla
+	w.Stop()
+
+	// Dilimleri temizle
+	w.ClearData()
+
+	// WaitGroup'ların tamamlandığından emin ol
+	//w.SleepWg.Wait()
+	//w.ProssesWg.Wait()
+}
+
+func (w *Worker) CloseChannels() {
+	close(w.goroutineCountChan)
+}
+
+func (w *Worker) Stop() {
+	w.isrunning = false
+	w.isInteractiveWindow = false
+}
+
+func (w *Worker) ClearData() {
+	w.FoundUrls = nil
+	w.FoundPaths = nil
+	w.DuplicateIndexes = nil
+	w.Config = nil
+	w.WorkQueue = nil
 }
