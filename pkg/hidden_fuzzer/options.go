@@ -26,26 +26,27 @@ func (h *headerFlags) Set(value string) error {
 }
 
 type Options struct {
-	Url                 string
-	Wordlist            string
-	Extensions          string
-	Headers             headerFlags
-	Method              string
-	Threads             int
-	FailureConter       int
-	DuplicateCounter    int
-	RedirectConter      int
-	Silent              bool
-	FailureCheckTimeout int
-	TimeOut             int
-	Depth               int
-	RateLimit           int
-	ParamFuzing         bool
-	ParamValue          string
-	Pipe                bool
-	FilterCode          string
-	ProxyUrl            string
-	XFFHeader           bool
-	XFFValue            string
-	WordlistStringArray []string
+	Url                     string
+	Wordlist                string
+	Extensions              string
+	Headers                 headerFlags
+	Method                  string
+	Threads                 int
+	FailureConter           int
+	DuplicateCounter        int
+	RedirectConter          int
+	Silent                  bool
+	FailureCheckTimeout     int
+	TimeOut                 int
+	Depth                   int
+	RateLimit               int
+	ParamFuzing             bool
+	ParamValue              string
+	Pipe                    bool
+	FilterCode              string
+	ProxyUrl                string
+	XFFHeader               bool
+	XFFValue                string
+	WordlistStringArray     []string
+	MaxBodyLengthForCompare int64
 }

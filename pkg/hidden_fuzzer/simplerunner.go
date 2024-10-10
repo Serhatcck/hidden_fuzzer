@@ -139,7 +139,10 @@ func (r *SimpleRunner) Execute(req *Request) (Response, error) {
 
 	if respbody, err := io.ReadAll(bodyReader); err == nil {
 		resp.ContentLength = int64(len(string(respbody)))
-		resp.Body = string(respbody)
+		if resp.ContentLength <= r.config.MaxBodyLengthForCompare {
+			resp.Body = string(respbody)
+		}
+
 	}
 
 	resp.Time = firstByteTime

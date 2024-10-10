@@ -8,26 +8,27 @@ import (
 )
 
 type Config struct {
-	Context             context.Context
-	Target              string
-	Url                 *url.URL
-	Silent              bool
-	Wordlist            []string
-	Extensions          []string
-	Threads             int
-	Headers             map[string]string
-	FailureCheckTimeout int
-	TimeOut             int
-	Method              string
-	FailureCounter      int
-	DuplicateCounter    int
-	RedirectCounter     int
-	Depth               int
-	RateLimit           int
-	UseRateLimit        bool
-	ParamFuzing         bool
-	ParamValue          string
-	ProxyUrl            string
+	Context                 context.Context
+	Target                  string
+	Url                     *url.URL
+	Silent                  bool
+	Wordlist                []string
+	Extensions              []string
+	Threads                 int
+	Headers                 map[string]string
+	FailureCheckTimeout     int
+	TimeOut                 int
+	Method                  string
+	FailureCounter          int
+	DuplicateCounter        int
+	RedirectCounter         int
+	Depth                   int
+	RateLimit               int
+	UseRateLimit            bool
+	ParamFuzing             bool
+	ParamValue              string
+	ProxyUrl                string
+	MaxBodyLengthForCompare int64
 }
 
 func (c *Config) Build(options Options) error {
@@ -96,6 +97,7 @@ func (c *Config) Build(options Options) error {
 	c.ParamFuzing = options.ParamFuzing
 	c.ParamValue = options.ParamValue
 	c.ProxyUrl = options.ProxyUrl
+	c.MaxBodyLengthForCompare = options.MaxBodyLengthForCompare
 
 	//if param fuzzing is true do not handle 403 or directories.
 	//do not process sub directory depth
