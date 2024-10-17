@@ -29,6 +29,7 @@ type Config struct {
 	ParamValue              string
 	ProxyUrl                string
 	MaxBodyLengthForCompare int64
+	Recheck                 bool
 }
 
 func (c *Config) Build(options Options) error {
@@ -98,6 +99,7 @@ func (c *Config) Build(options Options) error {
 	c.ParamValue = options.ParamValue
 	c.ProxyUrl = options.ProxyUrl
 	c.MaxBodyLengthForCompare = options.MaxBodyLengthForCompare
+	c.Recheck = options.Recheck
 
 	//if param fuzzing is true do not handle 403 or directories.
 	//do not process sub directory depth

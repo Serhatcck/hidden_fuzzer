@@ -98,8 +98,35 @@ func (w *Worker) Start() error {
 			return subFulderErr
 		}
 	}
+
+	if w.Config.Recheck {
+		WriteStr(w, "Recheck starting....")
+		time.Sleep(5 * time.Second)
+		w.recheck()
+	}
+
 	w.isrunning = false
 	return nil
+}
+
+func (w *Worker) recheck() {
+	w.WorkQueue = nil
+	for _, url := range w.FoundUrls {
+		w.WorkQueue = append(w.WorkQueue, getRequestForQueue(url.Response.URL, *w.Config))
+	}
+
+	w.FoundUrls = nil
+
+	w.startExecution()
+}
+
+func getRequestForQueue(url string, conf Config) WorkQueue {
+
+	return WorkQueue{Url: url, Req: Request{
+		URL:     url,
+		Headers: conf.Headers,
+		Method:  conf.Method,
+	}, RedirectConter: 0}
 }
 
 func (w *Worker) start(path string) error {
@@ -123,11 +150,7 @@ func (w *Worker) start(path string) error {
 			newUrl = makeUrl(path, newUrl)
 		}
 
-		w.WorkQueue = append(w.WorkQueue, WorkQueue{Url: newUrl, Req: Request{
-			URL:     newUrl,
-			Headers: w.Config.Headers,
-			Method:  w.Config.Method,
-		}, RedirectConter: 0})
+		w.WorkQueue = append(w.WorkQueue, getRequestForQueue(newUrl, *w.Config))
 	}
 	execErr := w.startExecution()
 	if execErr != nil {

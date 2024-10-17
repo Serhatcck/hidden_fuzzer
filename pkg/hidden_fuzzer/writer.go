@@ -30,6 +30,12 @@ func WriteFound(worker *Worker, queue WorkQueue, response Response) {
 	}
 }
 
+func WriteStr(worker *Worker, str string) {
+	if !worker.Config.Silent {
+		fmt.Fprintf(os.Stderr, "%s%s\n", Clear_Terminal, str)
+	}
+}
+
 func WriteFailure(worker *Worker, data string) {
 	if !worker.Config.Silent {
 		fmt.Fprintf(os.Stderr, "%s %d. %s\n", Clear_Terminal, worker.Config.FailureCounter, data)

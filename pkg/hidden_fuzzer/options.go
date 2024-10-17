@@ -49,4 +49,5 @@ type Options struct {
 	XFFValue                string
 	WordlistStringArray     []string
 	MaxBodyLengthForCompare int64
+	Recheck                 bool
 }

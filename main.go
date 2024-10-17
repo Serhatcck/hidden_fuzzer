@@ -51,10 +51,12 @@ func main() {
 	flagSet.StringVar(&options.ParamValue, "param-value", "test", "Value for parameter fuzzing")
 	flagSet.BoolVar(&options.Pipe, "pipe", false, "For pipe usage")
 	flagSet.StringVar(&options.FilterCode, "fc", "", "Filter response HTTP status code, only one code allowed")
-	flagSet.StringVar(&options.ProxyUrl, "p", "", "Proxy URL for all ongoing requests")
+	flagSet.StringVar(&options.ProxyUrl, "proxy", "", "Proxy URL for all ongoing requests")
 	flagSet.BoolVar(&options.XFFHeader, "xff", false, "Use X-F-F headers")
 	flagSet.StringVar(&options.XFFValue, "xff-val", "127.0.0.1", "Value for X-F-F headers (e.g., localhost 127.0.0.1)")
 	flagSet.Int64Var(&options.MaxBodyLengthForCompare, "max-compare-size", 3000, "To address the CPU performance issue with the diff operation, the isSimilar() function compares the HTTP response bodies. However, comparing large HTML files negatively impacts performance. To mitigate this performance problem, a size limit has been imposed on the files to be compared. This way, large files will not undergo comparison, reducing CPU strain.​")
+	flagSet.BoolVar(&options.Recheck, "recheck", false, "Recheck ")
+	flagSet.IntVar(&options.RateLimit, "rt-limit", 0, "Rate limit (for unlimited rate limit use 0)")
 	// Parse the flags
 
 	flagSet.Usage = func() {
