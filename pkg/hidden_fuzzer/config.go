@@ -12,6 +12,8 @@ type Config struct {
 	Target                  string
 	Url                     *url.URL
 	Silent                  bool
+	OnlyWriteStats          bool
+	NoInteractive           bool
 	Wordlist                []string
 	Extensions              []string
 	Threads                 int
@@ -100,6 +102,8 @@ func (c *Config) Build(options Options) error {
 	c.ProxyUrl = options.ProxyUrl
 	c.MaxBodyLengthForCompare = options.MaxBodyLengthForCompare
 	c.Recheck = options.Recheck
+	c.OnlyWriteStats = options.OnlyWriteStats
+	c.NoInteractive = options.NoInteractive
 
 	//if param fuzzing is true do not handle 403 or directories.
 	//do not process sub directory depth

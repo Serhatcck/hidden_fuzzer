@@ -36,6 +36,8 @@ type Options struct {
 	DuplicateCounter        int
 	RedirectConter          int
 	Silent                  bool
+	OnlyWriteStats          bool
+	NoInteractive           bool
 	FailureCheckTimeout     int
 	TimeOut                 int
 	Depth                   int

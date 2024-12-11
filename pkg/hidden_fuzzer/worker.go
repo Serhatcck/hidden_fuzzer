@@ -70,12 +70,15 @@ func NewWorker(conf *Config) *Worker {
 }
 
 func (w *Worker) Start() error {
-	go func() {
-		err := HandleInteractive(w)
-		if err != nil {
-			log.Printf("Error while trying to initialize interactive session: %s", err)
-		}
-	}()
+	if !w.Config.NoInteractive {
+		go func() {
+			err := HandleInteractive(w)
+			if err != nil {
+				log.Printf("Error while trying to initialize interactive session: %s", err)
+			}
+		}()
+	}
+
 	// Gorutin sayısını takip etmek için bir kanal oluştur
 	w.isInteractiveWindow = false
 	w.isrunning = true

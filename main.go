@@ -44,6 +44,8 @@ func main() {
 	flagSet.IntVar(&options.DuplicateCounter, "dp-counter", 50, "Number of duplicates to check")
 	flagSet.IntVar(&options.RedirectConter, "rd-counter", 3, "Number of redirects to check")
 	flagSet.BoolVar(&options.Silent, "silent", false, "Suppress output")
+	flagSet.BoolVar(&options.OnlyWriteStats, "only-stats", false, "Only Write Stats")
+	flagSet.BoolVar(&options.NoInteractive, "no-interactive", false, "No Interactive Window")
 	flagSet.IntVar(&options.FailureCheckTimeout, "fc-tm-out", 1, "Failure check timeout (seconds)")
 	flagSet.IntVar(&options.TimeOut, "tm-out", 20, "HTTP response timeout (seconds)")
 	flagSet.IntVar(&options.Depth, "depth", 3, "Subdirectory depth")

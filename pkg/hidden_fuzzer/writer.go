@@ -11,7 +11,7 @@ const (
 )
 
 func WriteStatus(worker *Worker, stat int, counter int) {
-	if !worker.Config.Silent {
+	if !worker.Config.Silent || worker.Config.OnlyWriteStats {
 		fmt.Fprintf(os.Stderr, "%s[Target: %s] -- [Req per second: %d] -- [Status: %d/%d]", Clear_Terminal, worker.currentTarget, stat, counter, len(worker.WorkQueue))
 	}
 }
