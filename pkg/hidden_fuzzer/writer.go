@@ -12,7 +12,7 @@ const (
 
 func WriteStatus(worker *Worker, stat int, counter int) {
 	if !worker.Config.Silent || worker.Config.OnlyWriteStats {
-		fmt.Fprintf(os.Stderr, "%s[Target: %s] -- [Req per second: %d] -- [Status: %d/%d]", Clear_Terminal, worker.currentTarget, stat, counter, len(worker.WorkQueue))
+		fmt.Fprintf(os.Stderr, "%s[Target: %s] -- [Req per second: %d] -- [Status: %d/%d] -- [Subfolder will be fuzz: %d]", Clear_Terminal, worker.currentTarget, stat, counter, len(worker.WorkQueue), len(worker.TargetPaths))
 	}
 }
 
