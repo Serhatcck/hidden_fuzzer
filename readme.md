@@ -1,100 +1,192 @@
-# URL Fuzzing Tool
+# hidden_fuzzer
 
-This project is a URL fuzzing tool that helps to discover hidden paths and resources on a target web application. It supports multithreading, custom HTTP headers, and customizable request parameters to optimize fuzzing performance.
+> A fast, intelligent web content discovery tool that automatically filters false positives using similarity algorithms — no complex matchers or filters required.
 
-The tool uses the similarity algorithm from [hyperjumptech/beda](https://github.com/hyperjumptech/beda) to evaluate if the results are valid or false positives during the fuzzing process.
+[![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://golang.org)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Serhatcck/hidden_fuzzer)](https://goreportcard.com/report/github.com/Serhatcck/hidden_fuzzer)
+[![Release](https://img.shields.io/github/v/release/Serhatcck/hidden_fuzzer)](https://github.com/Serhatcck/hidden_fuzzer/releases)
 
+---
 
+## What is hidden_fuzzer?
+
+**hidden_fuzzer** is a command-line tool written in Go for discovering hidden paths, directories, and resources on web applications. It is built for penetration testers, bug bounty hunters, and security researchers who need fast and accurate content discovery.
+
+Unlike traditional fuzzing tools that require you to manually configure status code filters or response size matchers, hidden_fuzzer uses the **Jaro and Jaro-Winkler string similarity algorithms** to automatically detect and discard false positives — so you get clean results with a single command.
+
+---
 
 ## Features
 
-- **Detects potential false positives using a similarity algorithm:** 
-  During the fuzzing process, the tool analyzes the responses returned by the server and compares them with a baseline response (usually a 404 or 429 response indicating "Not Found" or "Too Many Requests"). The comparison is done using the Jaro and Jaro-Winkler distance algorithms from the [hyperjumptech/beda](https://github.com/hyperjumptech/beda) repository.
+- **Automatic false positive detection** — Compares responses against a baseline using Jaro/Jaro-Winkler similarity. No need to set up `-mc`, `-fc`, or size filters manually.
+- **Duplicate response filtering** — Tracks structurally identical responses and removes noise from results.
+- **Recursive directory fuzzing** — Automatically queues discovered directories and fuzzes them up to a configurable depth.
+- **Parameter fuzzing mode** — Append wordlist entries as query parameters instead of path segments.
+- **Multi-threading** — Configurable number of concurrent goroutines for high-speed scanning.
+- **Rate limiting** — Optionally throttle requests per second to avoid overwhelming targets.
+- **Proxy support** — Route all traffic through an HTTP/HTTPS proxy (e.g. Burp Suite).
+- **Custom HTTP headers** — Pass any header with `-H`, including authentication tokens.
+- **X-Forwarded-For bypass** — Inject common IP spoofing headers with `-xff`.
+- **Recheck mode** — Re-validate discovered URLs at the end of a scan.
+- **Interactive mode** — Pause, inspect, and control a running scan without stopping it.
+- **Pipe-friendly output** — Use `-pipe` to get clean URL-only output for chaining with other tools.
+- **Extension expansion** — Automatically append file extensions (`.php`, `.html`, etc.) to each wordlist entry.
 
-  The tool checks if two responses are similar by comparing the response body of the baseline with the current response. If the Jaro distance is greater than 0.80 and the Jaro-Winkler distance is greater than 0.90, the responses are considered similar, and the current response is marked as a potential false positive. This helps to avoid reporting irrelevant results, such as repeated "Not Found" pages, by filtering out responses that match the structure and content of a 404 error page or similar responses.
-
-  Additionally, the tool handles duplicate responses by tracking a list of previously encountered responses. If a new response matches one already seen, the tool increases the duplicate counter. Once the duplicate counter reaches a threshold, the response is considered a duplicate and ignored.
-- **Automatic URL Extraction without Matchers or Filters**:  
-  Unlike other fuzzing tools that require complex matcher or filter commands to refine the results, this tool automatically extracts valid URLs with a single command. It uses an intelligent similarity algorithm to detect false positives, eliminating the need to manually configure matchers or filters. 
-
-  By analyzing the response structure and comparing it with common patterns such as 404 or 429 errors, the tool can determine whether a response is valid or a false positive. This makes it highly efficient, allowing users to extract hidden URLs directly without additional configuration. Simply provide the target URL and wordlist, and the tool will handle the rest, filtering out irrelevant responses and providing you with valid results.
-- URL fuzzing with custom wordlists
-- Customizable request method (currently supports only `GET`)
-- Ability to add custom headers
-- Multi-threading support for faster fuzzing
-- Silent mode for quiet output
-- Custom timeouts for failure and response handling
-- Adjustable depth for fuzzing subdirectories
+---
 
 ## Installation
-To install and use the tool, you can install from go install 
+
+### Install via Go (recommended)
 
 ```bash
- go install github.com/Serhatcck/hidden_fuzzer@latest
+go install github.com/Serhatcck/hidden_fuzzer@latest
 ```
 
-
-To install and use the tool as a module, you can include it in your project from the following repository:
+### Use as a Go module
 
 ```bash
 go get github.com/Serhatcck/hidden_fuzzer
 ```
 
-## Usage
-The tool can be run from the command line with the following options:
-```bash
-Usage: hidden_fuzzer [options]
+Then import in your code:
 
-Options:
-  -h                     Show the help message
-  -url string            Target URL
-  -w string              Wordlist file
-  -e string              Extensions (e.g., ".json"). For multiple extensions, use commas.
-  -H "Name: Value"       Custom headers. For multiple headers, pass multiple `-H` options.
-  -m string              Request method (currently only supports GET)
-  -t int                 Maximum number of threads (default: 50)
-  -fail-counter int      Number of allowed failures before stopping (default: 3)
-  -dp-counter int        Number of duplicate responses before stopping (default: 50)
-  -rd-counter int        Number of allowed redirects before stopping (default: 3)
-  -silent                Run in silent mode
-  -fc-tm-out int         Failure check timeout in seconds (default: 1)
-  -tm-out int            HTTP response timeout in seconds (default: 20)
-  -depth int             Maximum subdirectory depth to fuzz (default: 3)
-```
-
-
-## Example
-Fuzzing a target URL with a custom wordlist and headers:
-```bash
-hidden_fuzzer -url http://example.com -w wordlist.txt -H "Authorization: Bearer token" -e ".php,.html" -t 100
-```
-This command fuzzes the target http://example.com using the specified wordlist and headers, searching for .php and .html files with 100 threads.
-
-## Module Usage
-
-You can use this tool as a module in your Go project. Import it as follows:
 ```go
-import "github.com/Serhatcck/hidden_fuzzer"
-
+import "github.com/Serhatcck/hidden_fuzzer/pkg/hidden_fuzzer"
 ```
-## Workflow Diagram
+
+---
+
+## Quick Start
+
+```bash
+# Basic directory discovery
+hidden_fuzzer -u http://example.com -w wordlist.txt
+
+# With file extensions and custom threads
+hidden_fuzzer -u http://example.com -w wordlist.txt -e .php,.html,.js -t 100
+
+# With authentication header and proxy
+hidden_fuzzer -u http://example.com -w wordlist.txt -H "Authorization: Bearer <token>" -proxy http://127.0.0.1:8080
+
+# Parameter fuzzing
+hidden_fuzzer -u http://example.com/api -w params.txt -param-fuzzing
+
+# Pipe output to another tool
+hidden_fuzzer -u http://example.com -w wordlist.txt -pipe | httpx
+```
+
+---
+
+## CLI Reference
+
+| Flag | Default | Description |
+|---|---|---|
+| `-u` | — | Target URL **(required)** |
+| `-w` | — | Path to wordlist file **(required)** |
+| `-e` | — | File extensions to append, comma-separated (e.g. `.php,.html`) |
+| `-H "Name: Value"` | — | Custom request header. Repeat for multiple headers |
+| `-m` | `GET` | HTTP method (currently GET only) |
+| `-t` | `50` | Number of concurrent threads |
+| `-depth` | `3` | Maximum subdirectory depth to recurse into |
+| `-fail-counter` | `3` | Consecutive failures before pausing |
+| `-dp-counter` | `50` | Duplicate response threshold before suppressing |
+| `-rd-counter` | `3` | Maximum redirect hops to follow |
+| `-fc` | — | Filter out a specific HTTP status code from results |
+| `-proxy` | — | Proxy URL (e.g. `http://127.0.0.1:8080`) |
+| `-xff` | `false` | Inject X-Forwarded-For and related IP spoofing headers |
+| `-xff-val` | `127.0.0.1` | IP value to use with `-xff` |
+| `-param-fuzzing` | `false` | Fuzz query parameters instead of paths |
+| `-param-value` | `test` | Value to assign to each fuzzed parameter |
+| `-recheck` | `false` | Re-request all found URLs after the scan completes |
+| `-max-compare-size` | `3000` | Maximum response body size (bytes) used in similarity comparison |
+| `-rt-limit` | `0` | Requests per second limit (`0` = unlimited) |
+| `-tm-out` | `20` | HTTP response timeout in seconds |
+| `-fc-tm-out` | `1` | Failure check retry interval in seconds |
+| `-silent` | `false` | Suppress all output except errors |
+| `-only-stats` | `false` | Only show request statistics, not found URLs |
+| `-no-interactive` | `false` | Disable interactive keyboard controls |
+| `-pipe` | `false` | Print only discovered URLs to stdout (for piping) |
+
+---
+
+## How It Works
+
+### False Positive Detection
+
+When fuzzing begins, hidden_fuzzer first sends a request to the target URL to establish a **baseline response**. This baseline is used to filter responses that are structurally identical to a known-invalid page (e.g. a custom 404 page).
+
+For each subsequent response, the tool compares the response body against the baseline using two metrics:
+
+- **Jaro Distance** — measures character-level similarity
+- **Jaro-Winkler Distance** — gives extra weight to matching prefixes
+
+If both scores exceed the configured thresholds (`> 0.80` and `> 0.90` respectively), the response is considered a false positive and discarded.
+
+### Duplicate Suppression
+
+Responses that are structurally similar to each other (but not to the baseline) are grouped. Once a response pattern appears more than `dp-counter` times, it is suppressed from results.
+
+### Recursive Directory Discovery
 
 ```mermaid
 graph TD
-    A("PATHS") --> B("Do Request")
-    B --> D{"MainCheck"}
-    D -- TRUE --> n1["NOT FOUND"]
-    D -- FALSE --> n2{"DuplicateCheck"}
-    n2 -- FALSE --> n3{"DirectoryCheck"}
-    n2 -- TRUE --> n1
-    n3 -- TRUE --> n4["Add New Path"]
-    n4 --> A
-    n3 -- FALSE --> n5["FOUND"]
+    A("PATHS") --> B("Send Request")
+    B --> D{"MainCheck\n(false positive?)"}
+    D -- Yes --> N1["Discard"]
+    D -- No --> N2{"DuplicateCheck"}
+    N2 -- Yes --> N1
+    N2 -- No --> N3{"Directory? (403)"}
+    N3 -- Yes --> N4["Queue for recursion"]
+    N4 --> A
+    N3 -- No --> N5["FOUND — report result"]
 ```
 
-### Acknowledgments
+---
 
-Special thanks to the following repositories for their inspiration and contributions:
+## Module Usage Example
 
-- [ffuf](https://github.com/ffuf/ffuf) for providing inspiration on how to structure and optimize the fuzzing process.
-- [hyperjumptech/beda](https://github.com/hyperjumptech/beda) for the similarity algorithm used in detecting false positives.
+```go
+package main
+
+import (
+    "fmt"
+    hidden_fuzzer "github.com/Serhatcck/hidden_fuzzer/pkg/hidden_fuzzer"
+)
+
+func main() {
+    var conf hidden_fuzzer.Config
+    err := conf.Build(hidden_fuzzer.Options{
+        Url:              "http://example.com",
+        Wordlist:         "wordlist.txt",
+        Extensions:       ".php,.html",
+        Method:           "GET",
+        Threads:          50,
+        FailureConter:    3,
+        DuplicateCounter: 50,
+        RedirectConter:   3,
+        Silent:           false,
+        TimeOut:          20,
+        Depth:            3,
+    })
+    if err != nil {
+        panic(err)
+    }
+
+    worker := hidden_fuzzer.NewWorker(&conf)
+    if err := worker.Start(); err != nil {
+        panic(err)
+    }
+
+    for _, found := range worker.FoundUrls {
+        fmt.Printf("[%d] %s\n", found.Response.StatusCode, found.Request.URL)
+    }
+}
+```
+
+---
+
+## Acknowledgments
+
+- [ffuf](https://github.com/ffuf/ffuf) — inspiration for tool structure and fuzzing approach
+- [hyperjumptech/beda](https://github.com/hyperjumptech/beda) — Jaro and Jaro-Winkler similarity algorithms used for false positive detection
